@@ -50,7 +50,22 @@ public class Pieza {
         this.historialVentas = new ArrayList<Oferta>();
     }
 
-  
+    public void setValorFijo(double valorFijo) {
+    	this.valorFijo = valorFijo;
+    }
+    
+    public void setDisponibleVenta(boolean disponibleVenta) {
+    	this.disponibleVenta = disponibleVenta;
+    }
+    
+    public void setValorMinimo(int valorMinimo) {
+    	this.valorMinimo = valorMinimo;
+    }
+    
+    public void setValorInicial(int valorInicial) {
+    	this.valorInicial = valorInicial;
+    }
+    
     public String getIdPieza() {
         return idPieza;
     }

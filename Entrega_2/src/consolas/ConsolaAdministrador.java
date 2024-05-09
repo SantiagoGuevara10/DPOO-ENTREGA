@@ -8,6 +8,8 @@ import galeria.inventarios.PiezaFotografia;
 import galeria.inventarios.PiezaPintura;
 import galeria.inventarios.PiezaVideo;
 import subasta.Oferta;
+import subasta.Subasta;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -47,7 +49,8 @@ public class ConsolaAdministrador extends ConsolaBasica {
             System.out.println("4. Registrar Oferta");
             System.out.println("5. Ver Historia de Compras");
             System.out.println("6. Calcular Valor de Colección");
-            System.out.println("7. Salir");
+            System.out.println("7. Crear Subasta");
+            System.out.println("8. Salir");
 
             int opcion = pedirEnteroAlUsuario("Seleccione una opción:");
             switch (opcion) {
@@ -70,6 +73,10 @@ public class ConsolaAdministrador extends ConsolaBasica {
                     calcularValorColeccion();
                     break;
                 case 7:
+                    crearSubasta();
+                    
+                    break;
+                case 8:
                     System.out.println("Saliendo al menú principal...");
                     continuar = false; 
                     break;
@@ -83,13 +90,16 @@ public class ConsolaAdministrador extends ConsolaBasica {
     private void agregarPieza() throws IOException {
     	String piezaID = "";
     	Pieza pieza = null;
-        String idComprador = pedirCadenaAlUsuario("Ingrese el ID del comprador");
+        String idComprador = pedirCadenaAlUsuario("Ingrese el ID del vendedor");
         for(int i=0; i<users.getCompradoresEnPrograma().size();i++) {
         	CompradorPropietario comprador = users.getCompradoresEnPrograma().get(i);
         	if(comprador.getIdUsuario().equals(idComprador)){
         		piezaID = pedirCadenaAlUsuario("Ingresar el ID de la pieza que ingresará");
-        		String descripcion = comprador.getPieza(i).getDescripcion();
+        		String descripcion = comprador.getPiezasss(piezaID).getDescripcion();
         		List<Pieza> piezas = comprador.getPiezas();
+        		double valorFijo = pedirNumeroAlUsuario("Ingrese un valor por el cual la pieza se vendera sin subastarse");
+        	    int valorMinimo = pedirEnteroAlUsuario("Ingrese un valor minimo de venta si se llega a subastar");
+        	    int valorInicial = pedirEnteroAlUsuario("Ingrese un valor inicial de las ofertas de si se llega a subastar");
         		for(int j=0; j<piezas.size();j++) {
         			if(piezas.get(j).getIdPieza().equals(piezaID)) {
         				if(descripcion.equals("Escultura")) {
@@ -104,7 +114,11 @@ public class ConsolaAdministrador extends ConsolaBasica {
                 		else if (descripcion.equals("Video")) {
                          	pieza = (PiezaVideo)piezas.get(j);
                 		}
-        				
+        				pieza.setValorFijo(valorFijo);
+        				pieza.setValorInicial(valorInicial);
+        				pieza.setValorMinimo(valorMinimo);
+        				pieza.setDisponibleVenta(true);
+        				comprador.getPiezas().remove(j);
         			}
         		}
         		
@@ -118,7 +132,7 @@ public class ConsolaAdministrador extends ConsolaBasica {
 		        		else {
 		        			inventario.addInventarioExhibido(piezaID, pieza);
 		        		}
-		        		comprador.getPiezas().remove(i);
+		        		
 		        		
 		        		break;
         	}
@@ -173,14 +187,57 @@ public class ConsolaAdministrador extends ConsolaBasica {
 		inventario.guardarUsuarios(archivo2);
     }
 
-    private void registrarOferta() {
+    
+    private void crearSubasta() throws IOException {
+    	String idPiezas = pedirCadenaAlUsuario("Ingrese un listado de los ID de las piezas que quiere tener en la subasta separado por , y sin espacios");
+    	String[] partes = idPiezas.split( "," );
+    	List<String> idPiezass = new LinkedList<String>();
+    	for(int i=0; i<partes.length;i++) {
+    		String idPieza = partes[i];
+    		idPiezass.add(idPieza);}
+    	
+    	Random random = new Random();
+        List<Integer> numeros = new LinkedList<>();
+        for(int i =0; i<inventario.getSubastasEnProceso().size();i++) {
+        	String valor = inventario.getSubastasEnProceso().get(i).getId();
+        	int numero = Integer.parseInt(valor);
+        	numeros.add(numero);
+        	}
+        
+        int numeroAleatorio;
+        do {
+            numeroAleatorio = random.nextInt(1000); // Generar un número aleatorio entre 0 y 9 (por ejemplo)
+        } while (numeros.contains(numeroAleatorio));
+    	String idSubasta = String.valueOf(numeroAleatorio);
+    	
+    	Subasta subasta = new Subasta(idSubasta);
+    	subasta.setIdPiezasDisponibles(idPiezass);
+    	inventario.getSubastasEnProceso().add(subasta);
+    	users.guardarUsuarios(archivo);
+		inventario.guardarUsuarios(archivo2);
+    	
+    	
+    }
+
+    private void registrarOferta() throws IOException {
         String idPieza = pedirCadenaAlUsuario("Ingrese el ID de la pieza:");
-        Pieza pieza = inventario.getPiezaInventarioBodega(idPieza); 
-        if (pieza == null) pieza = inventario.getPiezaInventarioExhibido(idPieza);
-        CompradorPropietario comprador = buscarCompradorPorId(pedirCadenaAlUsuario("Ingrese el ID del comprador:"));
+        String idComprador =pedirCadenaAlUsuario("Ingrese el ID del comprador:");
         int dinero = pedirEnteroAlUsuario("Ingrese el monto de la oferta:");
-        Oferta oferta = new Oferta(comprador.getIdUsuario(), idPieza, dinero);
+        Oferta oferta = new Oferta(idComprador, idPieza, dinero);
+        for(int i=0; i<inventario.getSubastasEnProceso().size();i++) {
+        	Subasta subasta = inventario.getSubastasEnProceso().get(i);
+        	for(int j=0; j<subasta.getIdPiezasDisponibles().size();j++) {
+        		String idPiezaaa = subasta.getIdPiezasDisponibles().get(j);
+        		if(idPiezaaa.equals(idPieza)) {
+        			subasta.getOfertas().add(oferta);
+        		}
+        		
+        	}
+        	
+        }
         System.out.println("Oferta registrada exitosamente.");
+        users.guardarUsuarios(archivo);
+		inventario.guardarUsuarios(archivo2);
     }
     private void verHistoriaCompras() {
         String idUsuario = pedirCadenaAlUsuario("Ingrese el ID del comprador:");

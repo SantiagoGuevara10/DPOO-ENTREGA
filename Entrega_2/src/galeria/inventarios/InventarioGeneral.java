@@ -330,6 +330,7 @@ public class InventarioGeneral {
     		String dineroo = String.valueOf(valor);
     		writer.print("Dinero"+":"+dineroo);
     		
+    		writer.print("\n");
 	        writer.println("Información de las subastas");
 	        
 	        for(int i=0;i< subastasEnProceso.size();i++) {

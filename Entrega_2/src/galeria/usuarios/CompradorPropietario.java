@@ -61,6 +61,16 @@ public class CompradorPropietario {
     	return piezas;
     }
     
+    public Pieza getPiezasss(String idPieza){
+    	Pieza pieza = null;
+    	for(int i=0;i<piezas.size();i++) {
+    		if (piezas.get(i).getIdPieza().equals(idPieza)) {
+    			pieza = piezas.get(i);
+    		}
+    	}
+    	return pieza;
+    }
+    
     public Pieza getPieza(int i ){
     	return piezas.get(i);
     }
